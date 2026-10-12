@@ -1,0 +1,3 @@
+import {Link} from 'react-router-dom';
+import {ClipboardList} from 'lucide-react';
+export default function MyRepairs(){return <main className="section"><div className="container"><div className="page-intro"><span className="eyebrow">ЛИЧЕН ПАНЕЛ</span><h1>Моите заявки</h1><p>Тук ще се показват заявките на влезлия потребител след интеграцията със Supabase.</p></div><div className="empty-state"><ClipboardList size={42}/><h2>Все още няма лични заявки</h2><p>За този екран е необходима реална регистрация и база данни.</p><Link className="btn btn-primary" to="/repairs/create">Формуляр за нова заявка</Link></div></div></main>}
