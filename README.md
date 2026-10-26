@@ -1,74 +1,405 @@
 # TechFix – система за управление на компютърни ремонти
 
-React + Vite приложение със Supabase Auth и PostgreSQL. Реализирани са публичен каталог, заявки за ремонт, регистрация, вход, личен панел, редактиране и изтриване на собствени заявки, както и коментари.
+**ReactJS проект за SoftUni**
 
-## Стартиране
+TechFix е уеб приложение за публикуване, проследяване и управление на заявки за компютърни ремонти. Системата позволява на потребителите да регистрират профили, да създават заявки за ремонт, да редактират и изтриват собствените си заявки и да участват в дискусии чрез коментари.
 
-1. Инсталирайте Node.js и изпълнете `npm install`.
-2. Копирайте `.env.example` в `.env.local` и попълнете **собствените** Supabase URL и publishable key.
-3. Изпълнете `npm run dev` и отворете показания адрес (обичайно http://localhost:5173).
-4. За продукционна компилация: `npm run build`.
+Приложението е разработено с React и Vite, използва Supabase за удостоверяване на потребителите и PostgreSQL за съхранение на данните.
 
-## Supabase
+## 1. Връзки към проекта
 
-Необходима е съществуваща база с таблици `repairs`, `comments` и `profiles` и правилно настроени RLS политики. SQL схемата и политиките **не са включени** в този архив; проверете ги в Supabase Dashboard преди публикуване. Никога не поставяйте `service_role` или secret ключ във Vite клиентска променлива.
+- **Публикувано приложение:** https://tech-fix-chi.vercel.app/
+- **GitHub хранилище:** https://github.com/PetqEva/TechFix
+- **Основен клон:** `main`
+- **Хостинг:** Vercel
+- **База данни и удостоверяване:** Supabase
 
-## Маршрути
+## 2. Използвани технологии
 
-`/` – начална страница; `/repairs` – публичен каталог; `/repairs/:repairId` – детайли и коментари; `/repairs/create` – нова заявка; `/repairs/:repairId/edit` – редактиране; `/my-repairs` – лични заявки; `/profile` и `/users/:userId` – профил; `/login` и `/register` – удостоверяване.
+| Технология | Предназначение |
+|---|---|
+| React | Изграждане на потребителския интерфейс |
+| Vite | Среда за разработка и продукционна компилация |
+| JavaScript (JSX) | Програмна логика и React компоненти |
+| React Router | Навигация между страниците |
+| Supabase Auth | Регистрация, вход и управление на потребителски сесии |
+| PostgreSQL | Релационна база данни |
+| Supabase JavaScript SDK | Комуникация с базата данни и услугите за удостоверяване |
+| CSS | Оформление и адаптивен дизайн |
+| Lucide React | Икони в потребителския интерфейс |
+| Git и GitHub | Контрол на версиите |
+| Vercel | Публикуване на приложението |
 
-## Известни ограничения
+## 3. Основни функционалности
 
-- Полето за модел на устройството все още е сериализирано в `description` с префикс `Устройство:` за съвместимост със съществуващата база. Отделна колона изисква контролирана SQL миграция.
-- Защитата на данните зависи от действителните RLS правила и Data API разрешения в Supabase; клиентските проверки не ги заместват.
-- Няма включени автоматизирани тестове или миграции. Проведете тестове с два различни потребителя.
-- Административните операции за пароли не са част от клиентското приложение.
+### 3.1. Публична част
 
-## Структура
+Посетителите могат да:
 
-`src/pages` – екрани; `src/components` – интерфейсни компоненти; `src/lib/supabase.js` – Supabase клиент; `src/styles` – CSS.
+- Разглеждат началната страница.
+- Отварят публичния каталог със заявки за ремонт.
+- Търсят заявки по ключови думи.
+- Филтрират заявките според техния статус.
+- Преглеждат подробна информация за публичните заявки.
+- Отварят страниците за регистрация и вход.
 
+Достъпът до данните зависи и от настроените Supabase RLS политики.
 
-## Functional Guide (SoftUni exam template)
+### 3.2. Регистрирани потребители
 
-### 1. Project Overview
-**Application:** TechFix. **Category:** Computer repair service requests. Users can publish repair requests, track them, and discuss individual repairs through comments.
+Удостоверените потребители могат да:
 
-### 2. User Access & Permissions
-Guests can browse Home, Catalog, and Details (subject to Supabase public-read policies). Authenticated users can create requests, access My Repairs and Profile, and edit or delete only their own requests. Comments are intended for authenticated users; database policies must enforce permissions.
+- Създават нови заявки за ремонт.
+- Разглеждат собствените си заявки.
+- Редактират заявки, на които са собственици.
+- Изтриват собствените си заявки.
+- Преглеждат потребителския си профил.
+- Излизат от системата.
+- Използват функционалността за коментари съобразно зададените разрешения.
 
-### 3. Authentication & Session Handling
-Supabase Auth provides registration, email/password login and logout. AuthProvider initializes the session with getSession, listens to onAuthStateChange and shares user/loading via Context. Supabase SDK persists sessions across reloads. Registration may require email confirmation depending on the Supabase project settings.
+### 3.3. Управление на заявки
 
-### 4. Routing Structure
-Public: `/`, `/repairs`, `/repairs/:repairId`. Guest-only: `/login`, `/register`. Private: `/repairs/create`, `/repairs/:repairId/edit`, `/my-repairs`, `/profile`, `/users/:userId`. Unknown URLs display NotFound. PrivateRoute and GuestRoute implement redirects. The dynamic routes include `:repairId` and `:userId`.
+Всяка заявка съдържа информация за:
 
-### 5. List → Details Flow
-Catalog loads repair records from Supabase, supports text search and status filters, and links to `/repairs/:repairId`. Details reads the URL parameter via useParams and fetches the selected record and associated comments.
+- Заглавие на проблема.
+- Вид или категория на устройството.
+- Модел на устройството.
+- Подробно описание на проблема.
+- Статус на заявката.
+- Дата на създаване.
+- Собственик.
+- Публична видимост.
 
-### 6. Data Source & Backend
-Hosted Supabase provides PostgreSQL, authentication and the client SDK. The React application communicates with the remote backend using `@supabase/supabase-js`; no local JSON mock is required for production data. Confirm Row Level Security policies in the deployed database.
+Основните статуси са:
 
-### 7. Data Operations (CRUD)
-Create: authenticated user submits RepairForm. Read: Catalog, Details and MyRepairs query Supabase. Update: the owner edits a request through RepairForm. Delete: the owner can delete a request. Ownership must also be enforced server-side using Supabase RLS, not merely client-side checks.
+- **Нова**
+- **В процес**
+- **Завършена**
 
-### 8. Forms & Validation
-AuthPage includes registration/login fields; RepairForm contains title, device, category, description and visibility. Validate non-empty titles, a meaningful description, and matching registration passwords. Form submission uses React event handlers and state. Review server error messages and edge cases in the deployed application.
+### 3.4. Коментари
 
-### 9. React-Specific Techniques
-Functional components use useState and useEffect for UI state, remote data loading and lifecycle cleanup. AuthProvider uses createContext/useContext to share identity across routing and header components. The application uses React Router and external CSS in `src/styles/main.css`.
+Приложението включва функционалност за коментари към отделните заявки.
 
-### 10. Typical User Flow
-1. Guest opens the Catalog and a repair Details page. 2. Guest registers or logs in. 3. User creates a repair request. 4. User visits My Repairs, edits their own request and can interact with comments.
+Коментарите са свързани с конкретна заявка и потребител. Правата за създаване, редактиране и изтриване трябва да бъдат защитени чрез Supabase RLS.
 
-### 11. Error & Edge Case Handling
-Authentication failures appear in AuthPage. Data pages should show loading and API errors and handle missing records; validate these flows with real Supabase credentials. Guest-only/private guards show a session-loading state to avoid incorrect redirects during initialization.
+## 4. Структура на приложението
 
-## Deployment and submission checklist
-- Run `npm ci` and `npm run build` locally.
-- Configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in hosting environment variables (use publishable key only).
-- Confirm Supabase RLS, policies for repairs/comments, and auth redirect URLs.
-- Deploy the React build on Vercel or Netlify and verify it loads directly on nested routes.
-- **Replace this placeholder with your live frontend URL:** `DEPLOY_URL_TO_ADD`.
-- Publish a GitHub repository and confirm at least five meaningful commits over three distinct days; do not fabricate history.
-- Verify registration, login, logout, CRUD, comments and ownership with two separate accounts.
+Основните директории и файлове са:
+
+```text
+TechFix/
+├── src/
+│   ├── components/
+│   ├── context/
+│   ├── data/
+│   ├── lib/
+│   │   └── supabase.js
+│   ├── pages/
+│   ├── styles/
+│   │   └── main.css
+│   ├── App.jsx
+│   └── main.jsx
+├── index.html
+├── package.json
+├── package-lock.json
+├── vite.config.js
+├── .gitignore
+└── README.md
+```
+
+Основните директории имат следното предназначение:
+
+- `components/` – многократно използвани интерфейсни компоненти.
+- `context/` – управление на глобалното състояние за удостоверяване.
+- `data/` – помощни данни и модули.
+- `lib/` – конфигурация на външните услуги.
+- `pages/` – основни страници на приложението.
+- `styles/` – CSS стилове.
+- `App.jsx` – основна маршрутизация.
+- `main.jsx` – входна точка на React приложението.
+
+## 5. Маршрути
+
+| Маршрут | Предназначение | Достъп |
+|---|---|---|
+| `/` | Начална страница | Публичен |
+| `/repairs` | Каталог със заявки | Публичен |
+| `/repairs/:repairId` | Детайли на заявка | Според видимостта |
+| `/login` | Вход | Гост |
+| `/register` | Регистрация | Гост |
+| `/repairs/create` | Създаване на заявка | Удостоверен потребител |
+| `/repairs/:repairId/edit` | Редактиране на заявка | Собственик |
+| `/my-repairs` | Моите заявки | Удостоверен потребител |
+| `/profile` | Личен профил | Удостоверен потребител |
+| `/users/:userId` | Потребителски профил | Защитен маршрут |
+| `*` | Страница 404 | Публичен |
+
+За маршрутизацията се използва React Router.
+
+Компонентите `PrivateRoute` и `GuestRoute` контролират достъпа до съответните страници.
+
+## 6. Удостоверяване на потребителите
+
+Приложението използва Supabase Authentication.
+
+Поддържат се:
+
+1. Регистрация с имейл и парола.
+2. Вход със съществуващ профил.
+3. Изход от профила.
+4. Запазване на потребителската сесия.
+5. Защита на маршрути, изискващи удостоверяване.
+
+Компонентът `AuthProvider` използва React Context API за предоставяне на информация за текущия потребител.
+
+При зареждане на приложението сесията се проверява чрез `getSession()`, а промените в състоянието на удостоверяване се проследяват чрез `onAuthStateChange()`.
+
+В зависимост от настройките на Supabase регистрацията може да изисква потвърждение на имейла.
+
+## 7. База данни – Supabase
+
+За съхранение на информацията се използва PostgreSQL, предоставена чрез Supabase.
+
+Основните таблици са:
+
+- `repairs` – заявки за ремонт.
+- `comments` – коментари към заявки.
+- `profiles` – информация за потребителски профили.
+
+### 7.1. CRUD операции
+
+**Create:** създаване на нова заявка от удостоверен потребител.
+
+**Read:** зареждане на заявки в каталога, детайлната страница и личния панел.
+
+**Update:** редактиране на собствена заявка.
+
+**Delete:** изтриване на собствена заявка.
+
+Операциите се изпълняват чрез Supabase JavaScript SDK.
+
+### 7.2. Защита на данните
+
+Защитата трябва да се реализира на две нива:
+
+1. Клиентски проверки в React за управление на достъпа и интерфейса.
+2. Row Level Security (RLS) в Supabase за реално ограничаване на операциите с данните.
+
+Клиентските проверки сами по себе си не гарантират сигурност.
+
+**Важно:** SQL схемата и RLS политиките не са включени в тази документация. Те трябва да бъдат проверени в Supabase Dashboard.
+
+## 8. Форми и валидация
+
+Приложението съдържа форми за регистрация, вход, създаване и редактиране на заявки.
+
+### Регистрация
+
+Формата включва:
+
+- Име.
+- Имейл.
+- Парола.
+- Повторение на паролата.
+
+Необходимо е да се проверяват задължителните полета, валидността на имейла и съвпадението на паролите.
+
+### Заявка за ремонт
+
+Формата включва:
+
+- Заглавие.
+- Устройство.
+- Категория.
+- Описание.
+- Публична видимост.
+
+Необходимо е да се валидират задължителните полета и да се обработват грешките, върнати от Supabase.
+
+## 9. React функционалности
+
+В приложението се използват:
+
+- Функционални React компоненти.
+- `useState` за управление на локалното състояние.
+- `useEffect` за зареждане на данни и обработка на жизнения цикъл.
+- `useContext` за достъп до потребителската сесия.
+- React Router за навигация.
+- `useParams` за динамични URL параметри.
+- Условно визуализиране според състоянието на удостоверяване.
+- Асинхронни заявки към Supabase.
+- Компоненти за защита на маршрути.
+- Външни CSS стилове.
+
+## 10. Локално стартиране
+
+### 10.1. Необходими инструменти
+
+- Node.js
+- npm
+- Visual Studio Code или друг редактор
+- Git
+- Supabase проект
+
+### 10.2. Изтегляне на проекта
+
+```bash
+git clone https://github.com/PetqEva/TechFix.git
+cd TechFix
+```
+
+### 10.3. Инсталиране на зависимостите
+
+```bash
+npm install
+```
+
+### 10.4. Конфигуриране на Supabase
+
+Създайте файл `.env.local` в основната директория на проекта.
+
+Добавете:
+
+```env
+VITE_SUPABASE_URL=YOUR_SUPABASE_URL
+VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_SUPABASE_PUBLISHABLE_KEY
+```
+
+Заменете примерните стойности с настройките от собствения Supabase проект.
+
+Използвайте само публичния publishable ключ. Никога не поставяйте `service_role` или друг secret ключ в клиентското приложение.
+
+Файлът `.env.local` не трябва да се публикува в GitHub.
+
+### 10.5. Стартиране
+
+```bash
+npm run dev
+```
+
+Отворете адреса, показан в терминала, обикновено:
+
+http://localhost:5173/
+
+### 10.6. Продукционна компилация
+
+```bash
+npm run build
+```
+
+При успешна компилация Vite създава директория `dist/`.
+
+## 11. Публикуване във Vercel
+
+TechFix е публикуван чрез Vercel и е свързан с GitHub хранилището.
+
+**Адрес на приложението:**
+
+https://tech-fix-chi.vercel.app/
+
+Основни настройки:
+
+- Framework Preset: `Vite`
+- Root Directory: `./`
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- Production Branch: `main`
+
+Необходимите променливи на средата са:
+
+```text
+VITE_SUPABASE_URL
+VITE_SUPABASE_PUBLISHABLE_KEY
+```
+
+Те трябва да бъдат конфигурирани във Vercel.
+
+След промяна на променливите на средата е необходимо ново публикуване, за да бъдат включени в продукционната компилация.
+
+## 12. Примерен потребителски сценарий
+
+1. Посетител отваря началната страница.
+2. Преминава към каталога.
+3. Избира заявка и разглежда подробностите.
+4. Регистрира потребителски профил.
+5. Влиза в системата.
+6. Създава нова заявка за ремонт.
+7. Отваря раздела „Моите заявки“.
+8. Редактира собствената си заявка.
+9. Преглежда детайлите и използва коментарите.
+10. Излиза от профила.
+
+## 13. Обработка на грешки
+
+Приложението предвижда обработка на следните ситуации:
+
+- Невалидни данни за вход.
+- Неуспешна регистрация.
+- Липсваща потребителска сесия.
+- Опит за достъп до защитена страница.
+- Несъществуваща заявка.
+- Неуспешно зареждане на данни.
+- Неуспешно създаване или редактиране на заявка.
+- Опит за промяна на чужда заявка.
+
+Поведението при тези ситуации трябва да бъде проверено с реални потребителски профили и данни.
+
+## 14. Известни ограничения
+
+- Моделът на устройството се съхранява в `description` с префикс `Устройство:` за съвместимост със съществуващата база.
+- Отделна колона за устройството изисква контролирана SQL миграция.
+- Сигурността зависи от правилната конфигурация на Supabase RLS.
+- Автоматизирани тестове и SQL миграции не са включени.
+- Необходима е проверка на разрешенията с два различни потребителски профила.
+- Административното управление на пароли не е част от клиентското приложение.
+
+## 15. Проверка преди предаване
+
+### Технически проверки
+
+- [ ] `npm ci` се изпълнява успешно.
+- [x] `npm run build` е изпълнена успешно при предходната локална проверка.
+- [x] Проектът е публикуван във Vercel.
+- [x] GitHub хранилището е публично.
+- [x] Регистрацията и потребителският профил са проверени.
+- [x] Създаването и визуализирането на заявка са проверени.
+- [ ] Проверени са всички CRUD операции след публикуване.
+- [ ] Проверени са коментарите.
+- [ ] Проверени са RLS политиките.
+- [ ] Проверени са правата с два различни потребителски профила.
+- [ ] Проверено е директното отваряне на вложени маршрути.
+
+### GitHub история
+
+Към 25.10.2026 г. са установени три commit-а:
+
+1. `Initial commit - TechFix React project` – 12.10.2026 г.
+2. `Add Supabase integration` – 12.10.2026 г.
+3. `Integrate authentication context and protected routes` – 25.10.2026 г.
+
+За посоченото изискване за минимум пет смислени commit-а в три различни дни остават още две реални промени и поне един допълнителен ден.
+
+## 16. Заключение
+
+TechFix демонстрира изграждането на React Single Page Application с маршрутизация, потребителско удостоверяване, комуникация с отдалечена база данни и управление на потребителско съдържание.
+
+Проектът обединява React, Supabase, PostgreSQL, GitHub и Vercel в уеб приложение за управление на компютърни ремонти.
+
+Окончателното потвърждение на всички изпитни изисквания зависи от успешните функционални тестове, проверката на сигурността и съпоставянето с официалното задание на SoftUni.
+
+## Публикуване на TechFix
+
+Приложението TechFix е публикувано във Vercel.
+
+Адрес на сайта:
+https://tech-fix-chi.vercel.app/
+
+GitHub хранилище:
+https://github.com/PetqEva/TechFix
+
+Използвани технологии:
+- React
+- Vite
+- Supabase
+- PostgreSQL
+- React Router
