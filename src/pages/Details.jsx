@@ -17,6 +17,7 @@ export default function Details() {
 
   const [repair, setRepair] = useState(null);
   const [userId, setUserId] = useState(null);
+  const [authRevision, setAuthRevision] = useState(0);
   const [comments, setComments] = useState([]);
   const [content, setContent] = useState('');
   const [editingId, setEditingId] = useState(null);
@@ -44,51 +45,42 @@ export default function Details() {
         const { data: authData, error: authError } =
           await supabase.auth.getUser();
 
-        if (authError) throw authError;
-
-        const user = authData.user;
+        // A missing session is valid for visitors viewing public repairs.
+        const user = authError ? null : authData?.user;
 
         const { data, error: dbError } = await supabase
           .from('repairs')
-          .select(
-            'id,user_id,title,description,device_type,status,created_at,is_public'
-          )
+          .select('id,user_id,title,description,device_type,status,created_at,is_public')
           .eq('id', repairId)
           .maybeSingle();
 
         if (dbError) throw dbError;
-
-        if (
-          !data ||
-          (!data.is_public && data.user_id !== user?.id)
-        ) {
-          throw new Error(
-            'Заявката не е намерена или нямаш достъп.'
-          );
+        if (!data || (!data.is_public && data.user_id !== user?.id)) {
+          throw new Error('Заявката не е намерена или нямаш достъп.');
         }
 
         if (!active) return;
-
         setUserId(user?.id || null);
         setRepair(data);
         setLoading(false);
 
-        const { data: rows, error: commentsError } =
-          await supabase
+        try {
+          const { data: rows, error: commentsError } = await supabase
             .from('comments')
             .select('id,repair_id,user_id,content,created_at')
             .eq('repair_id', repairId)
             .order('created_at', { ascending: true });
 
-        if (commentsError) throw commentsError;
-
-        if (active) setComments(rows || []);
+          if (commentsError) throw commentsError;
+          if (active) setComments(rows || []);
+        } catch (commentsErr) {
+          if (active) {
+            setCommentError(commentsErr.message || 'Грешка при коментарите.');
+          }
+        }
       } catch (err) {
         if (active) {
-          if (!repair) {
-            setError(err.message || 'Грешка при зареждане.');
-          }
-          setCommentError(err.message || 'Грешка при коментарите.');
+          setError(err.message || 'Грешка при зареждане.');
         }
       } finally {
         if (active) {
@@ -103,7 +95,16 @@ export default function Details() {
     return () => {
       active = false;
     };
-  }, [repairId]);
+  }, [repairId, authRevision]);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
+        setAuthRevision(value => value + 1);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const isOwner = repair?.user_id === userId && !!userId;
 
