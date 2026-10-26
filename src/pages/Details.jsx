@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   CalendarDays,
@@ -13,6 +13,7 @@ import { supabase } from '../lib/supabase';
 
 export default function Details() {
   const { repairId } = useParams();
+  const navigate = useNavigate();
 
   const [repair, setRepair] = useState(null);
   const [userId, setUserId] = useState(null);
@@ -23,6 +24,7 @@ export default function Details() {
   const [loading, setLoading] = useState(true);
   const [commentsLoading, setCommentsLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingRepair, setDeletingRepair] = useState(false);
   const [error, setError] = useState('');
   const [commentError, setCommentError] = useState('');
 
@@ -210,6 +212,32 @@ export default function Details() {
     }
   }
 
+  async function deleteRepair() {
+    if (!isOwner || deletingRepair) return;
+    if (!window.confirm('Сигурни ли сте, че искате да изтриете тази заявка? Действието е необратимо.')) return;
+
+    setDeletingRepair(true);
+    setError('');
+    try {
+      const { data, error: deleteError } = await supabase
+        .from('repairs')
+        .delete()
+        .eq('id', repairId)
+        .eq('user_id', userId)
+        .select('id');
+
+      if (deleteError) throw deleteError;
+      if (!data?.length) {
+        throw new Error('Заявката не е изтрита. Проверете правата за изтриване (RLS).');
+      }
+      navigate('/my-repairs', { replace: true });
+    } catch (err) {
+      setError(err.message || 'Грешка при изтриване на заявката.');
+    } finally {
+      setDeletingRepair(false);
+    }
+  }
+
   if (loading) {
     return (
       <main className="section container">
@@ -218,7 +246,7 @@ export default function Details() {
     );
   }
 
-  if (error || !repair) {
+  if (!repair) {
     return (
       <main className="section container">
         <h1>Заявката не е достъпна</h1>
@@ -300,14 +328,27 @@ export default function Details() {
           </p>
 
           {isOwner && (
-            <Link
-              className="btn btn-outline-dark"
-              to={`/repairs/${repair.id}/edit`}
-            >
-              <Pencil size={18} />
-              Редактирай заявката
-            </Link>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <Link
+                className="btn btn-outline-dark"
+                to={`/repairs/${repair.id}/edit`}
+              >
+                <Pencil size={18} />
+                Редактирай заявката
+              </Link>
+              <button
+                type="button"
+                className="btn btn-outline-dark"
+                style={{ color: '#b91c1c', borderColor: '#fca5a5' }}
+                disabled={deletingRepair}
+                onClick={deleteRepair}
+              >
+                <Trash2 size={18} />
+                {deletingRepair ? 'Изтриване...' : 'Изтрий заявката'}
+              </button>
+            </div>
           )}
+          {error && <p className="notice" role="alert" style={{ marginTop: 12 }}>{error}</p>}
         </article>
 
         <section
